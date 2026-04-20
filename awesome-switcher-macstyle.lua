@@ -11,18 +11,12 @@ local timer = gears.timer
 local client = client
 awful.client = require('awful.client')
 
-local naughty = require("naughty")
 local string = string
-local tostring = tostring
-local tonumber = tonumber
 local debug = debug
-local pairs = pairs
-local unpack = unpack or table.unpack
+local unpack = table.unpack
 
-local surface = cairo.ImageSurface(cairo.Format.RGB24,20,20)
-local cr = cairo.Context(surface)
-
-local awesome_switcher_macstyle = {}
+local surface = cairo.ImageSurface(cairo.Format.RGB24, 20, 20)
+local cr_context = cairo.Context(surface)
 
 -- settings
 
@@ -32,9 +26,9 @@ local settings = {
    preview_box_border = "#22222200",
    preview_box_fps = 30,
    preview_box_delay = 150,
-   preview_box_title_font = {"sans","italic","normal"},
+   preview_box_title_font = { "sans", "italic", "normal" },
    preview_box_title_font_size_factor = 1.0,
-   preview_box_title_color = {0,0,0,1},
+   preview_box_title_color = { 0, 0, 0, 1 },
 
    cycle_raise_client = false,
    swap_with_master = false,
@@ -46,13 +40,12 @@ preview_wbox.border_width = 3
 preview_wbox.ontop = true
 preview_wbox.visible = false
 
-local preview_live_timer = timer({ timeout = 1/settings.preview_box_fps })
-local preview_widgets = {}
+local preview_live_timer = timer({ timeout = 1 / settings.preview_box_fps })
 
 local altTabTable = {}
 local altTabIndex = 1
 
-local source = string.sub(debug.getinfo(1,'S').source, 2)
+local source = string.sub(debug.getinfo(1, 'S').source, 2)
 local path = string.sub(source, 1, string.find(source, "/[^/]*$"))
 local noicon = path .. "noicon.png"
 
@@ -109,13 +102,13 @@ local function preview()
    -- Make the wibox the right size, based on the number of clients
    local n = math.max(9, #altTabTable)
    local W = screen[mouse.screen].geometry.width
-   local w = W / n -- widget width
-   local h = w * 1.0  -- widget height -- without the titlebox!
+   local w = W / n   -- widget width
+   local h = w * 1.0 -- widget height -- without the titlebox!
    local textboxHeight = w * 0.125
 
    local x = screen[mouse.screen].geometry.x - preview_wbox.border_width
    local y = screen[mouse.screen].geometry.y + (screen[mouse.screen].geometry.height - h - textboxHeight) / 2
-   preview_wbox:geometry({x = x, y = y, width = W, height = h + textboxHeight})
+   preview_wbox:geometry({ x = x, y = y, width = W, height = h + textboxHeight })
 
    -- determine fontsize -> find maximum classname-length
    local text, textWidth, textHeight, maxText
@@ -123,11 +116,11 @@ local function preview()
    local maxTextHeight = 0
    local fontSize = textboxHeight / 2.0
    fontSize = math.floor(fontSize * settings.preview_box_title_font_size_factor + 0.5)
-   cr:set_font_size(fontSize)
+   cr_context:set_font_size(fontSize)
    for i = 1, #altTabTable do
       text = " - " .. altTabTable[i].class
-      textWidth = cr:text_extents(text).width
-      textHeight = cr:text_extents(text).height
+      textWidth = cr_context:text_extents(text).width
+      textHeight = cr_context:text_extents(text).height
       if textWidth > maxTextWidth or textHeight > maxTextHeight then
          maxTextHeight = textHeight
          maxTextWidth = textWidth
@@ -136,9 +129,9 @@ local function preview()
    end
 
    while true do
-      cr:set_font_size(fontSize)
-      textWidth = cr:text_extents(maxText).width
-      textHeight = cr:text_extents(maxText).height
+      cr_context:set_font_size(fontSize)
+      textWidth = cr_context:text_extents(maxText).width
+      textHeight = cr_context:text_extents(maxText).height
 
       if textWidth < w - textboxHeight and textHeight < textboxHeight then
          break
@@ -150,7 +143,7 @@ local function preview()
    -- create all the widgets
    for i = 1, #altTabTable do
       preview_widgets[i] = wibox.widget.base.make_widget()
-      preview_widgets[i].fit = function(preview_widget, width, height)
+      preview_widgets[i].fit = function(_, _, _)
          return w, h
       end
 
@@ -163,11 +156,11 @@ local function preview()
       else
          local max_res = 0
          local max_res_idx = 0
-         for i = 1, #c.icon_sizes do
-            current_res = c.icon_sizes[i][1]
+         for j = 1, #c.icon_sizes do
+            local current_res = c.icon_sizes[j][1]
             if current_res > max_res then
                max_res = current_res
-               max_res_idx = i
+               max_res_idx = j
             end
          end
          icon = gears.surface(c:get_icon(max_res_idx))
@@ -176,7 +169,7 @@ local function preview()
       local iconboxHeight = 0.8 * h
       local iconboxWidth = iconboxHeight
 
-      preview_widgets[i].draw = function(preview_widget, preview_wbox, cr, width, height)
+      preview_widgets[i].draw = function(_, _, cr, width, height)
          if width ~= 0 and height ~= 0 then
             local focus = (c == altTabTable[altTabIndex])
             local sx, sy, tx, ty
@@ -194,7 +187,7 @@ local function preview()
             tx = (w - iconboxWidth) / 2
             ty = (h - iconboxHeight) / 2
             sx = iconboxWidth / icon.width
-            sy = iconboxHeight  / icon.height
+            sy = iconboxHeight / icon.height
 
             -- Draw icon background for selected client
             if focus then
@@ -212,7 +205,7 @@ local function preview()
             cr:scale(sx, sy)
             cr:set_source_surface(icon, 0, 0)
             cr:paint()
-            cr:scale(1/sx, 1/sy)
+            cr:scale(1 / sx, 1 / sy)
             cr:translate(-tx, -ty)
 
             -- Draw title for selected client
@@ -234,20 +227,19 @@ local function preview()
       end)
 
       preview_live_timer:connect_signal("timeout", function()
-					   preview_widgets[i]:emit_signal("widget::updated")
+         preview_widgets[i]:emit_signal("widget::updated")
       end)
-
    end
 
    -- Spacers left and right
    local spacer = wibox.widget.base.make_widget()
-   spacer.fit = function(leftSpacer, width, height)
+   spacer.fit = function(_, _, _)
       return (W - w * #altTabTable) / 2, preview_wbox.height
    end
-   spacer.draw = function(preview_widget, preview_wbox, cr, width, height) end
+   spacer.draw = function() end
 
    --layout
-   preview_layout = wibox.layout.fixed.horizontal()
+   local preview_layout = wibox.layout.fixed.horizontal()
 
    preview_layout:add(spacer)
    for i = 1, #altTabTable do
@@ -326,11 +318,11 @@ local function switch(dir, alt, tab, shift_tab)
 
    -- preview delay timer
    local previewDelay = settings.preview_box_delay / 1000
-   local previewDelayTimer = timer({timeout = previewDelay})
+   local previewDelayTimer = timer({ timeout = previewDelay })
    previewDelayTimer:connect_signal("timeout", function()
-				       preview_wbox.visible = true
-				       previewDelayTimer:stop()
-				       preview(altTabTable, altTabIndex)
+      preview_wbox.visible = true
+      previewDelayTimer:stop()
+      preview()
    end)
    previewDelayTimer:start()
    preview_live_timer:start()
@@ -338,8 +330,8 @@ local function switch(dir, alt, tab, shift_tab)
 
    -- Now that we have collected all windows, we should run a keygrabber
    -- as long as the user is alt-tabbing:
-   if(keygrabber.isrunning() == false) then
-      keygrabber.run(function (mod, key, event)
+   if (keygrabber.isrunning() == false) then
+      keygrabber.run(function(_, key, event)
          -- Stop alt-tabbing when the alt-key is released
          if key == alt or key == "Escape" and event == "release" then
             preview_wbox.visible = false
@@ -365,8 +357,8 @@ local function switch(dir, alt, tab, shift_tab)
             -- raise selected client on top of all
             c:raise()
             if settings.swap_with_master == true then
-                -- swap selected with master as well
-                c:swap(awful.client.getmaster())
+               -- swap selected with master as well
+               c:swap(awful.client.getmaster())
             end
             -- focus selected client
             client.focus = c
@@ -380,20 +372,19 @@ local function switch(dir, alt, tab, shift_tab)
 
             keygrabber.stop()
 
-         -- Move to next client on each Tab-press
+            -- Move to next client on each Tab-press
          elseif (key == tab or key == "Right") and event == "press" then
             altTabIndex = cycle(altTabTable, altTabIndex, 1)
 
-         -- Move to previous client on Shift-Tab
+            -- Move to previous client on Shift-Tab
          elseif (key == shift_tab or key == "Left") and event == "press" then
             altTabIndex = cycle(altTabTable, altTabIndex, -1)
          end
-         end)
+      end)
    end
 
    -- switch to next client
    altTabIndex = cycle(altTabTable, altTabIndex, dir)
-
 end -- function altTab
 
-return {switch = switch, settings = settings}
+return { switch = switch, settings = settings }
