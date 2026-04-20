@@ -48,6 +48,9 @@ switcher.settings.preview_box_title_font = {"sans","italic","normal"},-- the fon
 switcher.settings.preview_box_title_font_size_factor = 1.0,           -- the font sizing factor
 switcher.settings.preview_box_title_color = {0,0,0,1},                -- the font color
 
+switcher.settings.all_tags = true,                                    -- Include clients on all tags instead of only current one
+switcher.settings.all_screens = true,                                 -- Include clients on all screens instead of only current one
+
 switcher.settings.cycle_raise_client = false,                         -- raise (bring to front) selected clients while tabbing
 switcher.settings.swap_with_master = false,                           -- swap the selected client with the master client (equivalent to a subsequent "modkey + Control + Return" in default awesome keybindings)
 ```

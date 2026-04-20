@@ -30,6 +30,9 @@ local settings = {
    preview_box_title_font_size_factor = 1.0,
    preview_box_title_color = { 0, 0, 0, 1 },
 
+   all_tags = true,
+   all_screens = true,
+
    cycle_raise_client = false,
    swap_with_master = false,
 }
@@ -272,7 +275,7 @@ local function switch(dir, alt, tab, shift_tab)
    -- This will preserve the history AND enable you to focus on minimized clients
 
    local t = s.selected_tag
-   local all = client.get(s)
+   local all = settings.all_screens and client.get() or client.get(s)
 
    for i = 1, #all do
       local c = all[i]
@@ -287,7 +290,7 @@ local function switch(dir, alt, tab, shift_tab)
          end
       end
 
-      if isCurrentTag then
+      if isCurrentTag or settings.all_tags then
          -- check if client is already in the history
          -- if not, add it
          local addToTable = true
@@ -309,6 +312,8 @@ local function switch(dir, alt, tab, shift_tab)
       return
    elseif #altTabTable == 1 then
       altTabTable[1].minimized = false
+      -- TODO view_only is not ideal if people actually use tags not only as workspaces
+      altTabTable[1].first_tag:view_only()
       altTabTable[1]:raise()
       return
    end
@@ -354,6 +359,8 @@ local function switch(dir, alt, tab, shift_tab)
             end
 
             c = altTabTable[altTabIndex]
+            -- TODO view_only is not ideal if people actually use tags not only as workspaces
+            c.first_tag:view_only()
             -- raise selected client on top of all
             c:raise()
             if settings.swap_with_master == true then
