@@ -312,9 +312,10 @@ local function switch(dir, alt, tab, shift_tab)
       return
    elseif #altTabTable == 1 then
       altTabTable[1].minimized = false
+      altTabTable[1]:raise()
       -- TODO view_only is not ideal if people actually use tags not only as workspaces
       altTabTable[1].first_tag:view_only()
-      altTabTable[1]:raise()
+      client.focus = altTabTable[1]
       return
    end
 
@@ -354,15 +355,16 @@ local function switch(dir, alt, tab, shift_tab)
                c = altTabTable[i]
                if not altTabMinimized[i] then
                   c:raise()
-                  client.focus = c
+                  -- TODO is this required? Clashes with lwm behavior at the moment
+                  -- client.focus = c
                end
             end
 
             c = altTabTable[altTabIndex]
-            -- TODO view_only is not ideal if people actually use tags not only as workspaces
-            c.first_tag:view_only()
             -- raise selected client on top of all
             c:raise()
+            -- TODO view_only is not ideal if people actually use tags not only as workspaces
+            c.first_tag:view_only()
             if settings.swap_with_master == true then
                -- swap selected with master as well
                c:swap(awful.client.getmaster())
